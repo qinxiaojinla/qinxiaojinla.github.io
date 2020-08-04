@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>垃圾回收 on Chaldea</title>
+    <link>http://qinxiaojinla.github.io/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/</link>
+    <description>Recent content in 垃圾回收 on Chaldea</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 03 Aug 2020 14:28:27 +0800</lastBuildDate>
+    
+	<atom:link href="http://qinxiaojinla.github.io/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>UE4源码笔记：Garbage Collection</title>
+      <link>http://qinxiaojinla.github.io/post/garbage01/</link>
+      <pubDate>Mon, 03 Aug 2020 14:28:27 +0800</pubDate>
+      
+      <guid>http://qinxiaojinla.github.io/post/garbage01/</guid>
+      <description>本系列文章是非常基础向的UE4框架和原理的总结，囿于作者有限的工程经验和知识储备，对一些原理的描述难免存在错误和浅显之处，欢迎各位指正。 UE</description>
+    </item>
+    
+  </channel>
+</rss>

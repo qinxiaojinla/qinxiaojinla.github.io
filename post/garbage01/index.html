@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>UE4源码笔记：Garbage Collection - Chaldea</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="ShengKai" /><meta name="description" content="本系列文章是非常基础向的UE4框架和原理的总结，囿于作者有限的工程经验和知识储备，对一些原理的描述难免存在错误和浅显之处，欢迎各位指正。 UE" /><meta name="keywords" content="Hugo, theme, even" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.74.3 with theme even" />
+
+
+<link rel="canonical" href="http://qinxiaojinla.github.io/post/garbage01/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<link href="/dist/even.c2a46f00.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="UE4源码笔记：Garbage Collection" />
+<meta property="og:description" content="本系列文章是非常基础向的UE4框架和原理的总结，囿于作者有限的工程经验和知识储备，对一些原理的描述难免存在错误和浅显之处，欢迎各位指正。 UE" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://qinxiaojinla.github.io/post/garbage01/" />
+<meta property="article:published_time" content="2020-08-03T14:28:27+08:00" />
+<meta property="article:modified_time" content="2020-08-03T14:28:27+08:00" />
+<meta itemprop="name" content="UE4源码笔记：Garbage Collection">
+<meta itemprop="description" content="本系列文章是非常基础向的UE4框架和原理的总结，囿于作者有限的工程经验和知识储备，对一些原理的描述难免存在错误和浅显之处，欢迎各位指正。 UE">
+<meta itemprop="datePublished" content="2020-08-03T14:28:27+08:00" />
+<meta itemprop="dateModified" content="2020-08-03T14:28:27+08:00" />
+<meta itemprop="wordCount" content="1835">
+
+
+
+<meta itemprop="keywords" content="垃圾回收," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="UE4源码笔记：Garbage Collection"/>
+<meta name="twitter:description" content="本系列文章是非常基础向的UE4框架和原理的总结，囿于作者有限的工程经验和知识储备，对一些原理的描述难免存在错误和浅显之处，欢迎各位指正。 UE"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Chaldea</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">主页</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">归档</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">类别</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于我</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Chaldea</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">主页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">归档</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">类别</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于我</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">UE4源码笔记：Garbage Collection</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2020-08-03 </span>
+        <div class="post-category">
+            <a href="/categories/ue4/"> UE4 </a>
+            </div>
+          <span class="more-meta"> 约 1835 字 </span>
+          <span class="more-meta"> 预计阅读 4 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="/img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents"></nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>  <em>本系列文章是非常基础向的UE4框架和原理的总结，囿于作者有限的工程经验和知识储备，对一些原理的描述难免存在错误和浅显之处，欢迎各位指正。</em></p>
+<hr>
+<p>  UE4没有使用C++那一套管理garbage的pipeline，而是自己实现了一套GC机制，在介绍UE4的GC之前，先简单聊一下GC，理解UE为什么舍弃了C++使用智能指针管理garbage的方法而自己实现了一套GC的管理逻辑。</p>
+<p>  C++的智能指针是基于reference counting实现的，这是一种基本的GC策略，优点很多，但缺点也很致命。抛开额外的use_count等开销不谈，无法解决环形引用问题是reference counting回收策略永远的痛，C++中的weak_ptr可以缓解环形引用的问题但不能根治，另外，在进行较大对象的free时，reference counting的方法还会引起卡顿&hellip;</p>
+<p>  UE4在C++之上实现了一套基于mark-sweep的GC机制，接下来本文将根据UE4(4.25.3版本)的代码来详细了解UE4 GC机制的原理。</p>
+<p>  UE4的GC机制通过在UObjectGlobals.h中声明、GarbageCollection.cpp中定义的<code>void CollectGarbage()</code>来实现，通常在World切换等场景下调用，如：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">UWorld</span><span class="o">*</span> <span class="n">FSeamlessTravelHandler</span><span class="o">::</span><span class="n">Tick</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">bNeedCancelCleanUp</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">IsAsyncLoading</span><span class="p">())</span>
+        <span class="p">{</span>
+            <span class="n">CollectGarbage</span><span class="p">(</span><span class="n">GARBAGE_COLLECTION_KEEPFLAGS</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  <code>CollectGarbage()</code>函数内容如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbage</span><span class="p">(</span><span class="n">EObjectFlags</span> <span class="n">KeepFlags</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">bPerformFullPurge</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">AcquireGCLock</span><span class="p">();</span><span class="c1">//上锁
+</span><span class="c1"></span>    <span class="n">CollectGarbageInternal</span><span class="p">(</span><span class="n">KeepFlags</span><span class="p">,</span> <span class="n">bPerformFullPurge</span><span class="p">);</span>
+    <span class="n">ReleaseGCLock</span><span class="p">();</span><span class="c1">//解锁
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  其中，多线程的内容不是本文的关注重点，这部分之后再介绍，重点是<code>CollectGarbageInternal()</code>函数。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">GIsInitialLoad</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">//log...
+</span><span class="c1"></span>        <span class="k">return</span>
+    <span class="p">}</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  在初始化加载的时候是不进行GC的，直到加载完成，这由<code>FUOBjectArray::OpenDisregardForGC()</code>和<code>FUOBjectArray::CloseDisregardForGC()</code>来进行管理。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="n">FGCCSyncObject</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">ResetGCIsWating</span><span class="p">();</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  FGCCSyncObject是UE中用来使用异步加载进行GC的类，这里也不是本文的重点~</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="n">check</span><span class="p">(</span><span class="n">IsLoading</span><span class="p">());</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  与初始化加载时不允许GC相同，UE也不允许线程在load的时候进行GC，在这里插一段，之前读代码看到这个<code>check()</code>，以为是个函数，最近看了下原来是assert，看源码好像有点东西的，这个后面再介绍~</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>	<span class="n">GNumAttemptsSinceLastGC</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  这个static变量跟另一个<code>static GNumRetriesBeforeForcingGC</code>变量是用在<code>bool TryCollectGarbage()</code>中，判断是否强行进行GC的flag。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>	<span class="k">if</span><span class="p">(</span><span class="n">GFlushStreamingOnGC</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">//log
+</span><span class="c1"></span>        <span class="n">FGCCSyncObject</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">GCUnlock</span><span class="p">();</span>
+        <span class="n">FlushAsyncLoading</span><span class="p">();</span>
+        <span class="n">FGCCSyncObject</span><span class="o">::</span><span class="n">Get</span><span class="p">().</span><span class="n">GCLock</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  这段代码是根据配置项<code>GFlushStreamingOnGC</code>来决定是否进行FlushStreaming，所谓FlushStreaming，应该是将缓冲区中由于之前加锁而未来得及加载的内容强制加载，看了下FlushAsyncLoading()源码应该是这个意思：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">FlushAsyncLoading</span><span class="p">(</span><span class="n">int32</span> <span class="n">PackageID</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">checkf</span><span class="p">(</span><span class="n">IsInGameThread</span><span class="p">(),</span> <span class="p">...);</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">GPackageLoader</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">GPackageLoader</span><span class="o">-&gt;</span><span class="n">FlushLoading</span><span class="p">(</span><span class="n">PackageID</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="n">FCoreUObjectDelegates</span><span class="o">::</span><span class="n">GetPreGarbageCollectDelegate</span><span class="p">().</span><span class="n">Broadcast</span><span class="p">();</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  通过委托回调函数来确保GC不发生在资源加载过程中，Broadcast()代码没吃透，吃透了再回来补。</p>
+<p>  <code>{FGCScopeLock GCLock}</code>表明接下来是多线程的代码区。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">GObjIncrementalPurgeIsInProgress</span> <span class="o">||</span> <span class="n">GObjPurgeIsRequired</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">IncrementalPurgeGarbage</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+            <span class="n">FMemory</span><span class="o">::</span><span class="n">Trim</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  这段是根据配置变量的值来决定是否进行一次增量清除操作或者清除操作，Trim()的注释是，&ldquo;Release as mush memory as possible&rdquo;。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">bForceSingleThreadedGC</span> <span class="o">=</span> <span class="n">ShouldForceSingleThreadedGC</span><span class="p">();</span>
+    <span class="k">const</span> <span class="kt">bool</span> <span class="n">bWithClusters</span> <span class="o">=</span> <span class="o">!!</span><span class="n">GCreateGCClusters</span> <span class="o">&amp;&amp;</span> <span class="n">GUObjectClusters</span><span class="p">.</span><span class="n">GetNumAllocatedClusters</span><span class="p">();</span> 
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  这段是如果机器是单核心、机器不支持多线程、或者detailed每个class gc的stats(线程不安全)，会fall back to single threaded GC。接下来是比较重要的对象可达性分析，这也表明了UE4 的GC机制是基于mark-sweep原理的：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">CollectGarbageInternal</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">//...
+</span><span class="c1"></span>    <span class="n">TagUsedRealtimeGC</span><span class="p">.</span><span class="n">PerformReachabilityAnalysis</span><span class="p">();</span>
+    <span class="c1">//...
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>  具体代码不展开写了，UE一层一层裹的很恶心，算法细节应该就是维护了一张有向无环的对象图，然后从根节点出发DFS，将遍历到的对象加入一张列表，最后将不在列表上的对象free掉。最后就是一些收尾工作了。</p>
+<p>  基于mark-sweep的GC策略可以很好的解决环形引用的问题，在对象比较多的时候，可达集合可以划分为几个不相交的小集合，因此GC是可以通过多线程来进行加速的。</p>
+<p>  第一次写UE源码笔记，感觉很多东西没有写清楚，以后继续努力啦。</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">ShengKai</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2020-08-03
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/">垃圾回收</a>
+          </div>
+      <nav class="post-nav">
+        
+        
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: '你的appId',
+        appKey: '你的appKey',
+        notify:  false ,
+        verify:  false ,
+        avatar:'mm',
+        placeholder: '说点什么吧...',
+        visitor:  false 
+    });
+  </script>
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="matrix1122@foxmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/qinxiaojinla" class="iconfont icon-github" title="github"></a>
+  <a href="http://qinxiaojinla.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    
+      <span id="busuanzi_container_site_pv">文章阅读总量 : <span id="busuanzi_value_site_pv"></span>次
+      <span class="division">|</span>
+    </span>访客数 : <span id="busuanzi_value_site_uv"></span>人次
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2017 - 
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">ShengKai</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/timeago.js@3.0.2/dist/timeago.min.js" integrity="sha256-jwCP0NAdCBloaIWTWHmW4i3snUNMHUNO+jr9rYd2iOI=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/timeago.js@3.0.2/dist/timeago.locales.min.js" integrity="sha256-ZwofwC1Lf/faQCzN7nZtfijVV6hSwxjQMwXL4gn9qU8=" crossorigin="anonymous"></script>
+  <script><!-- NOTE: timeago.js uses the language code format like "zh_CN" (underscore and case sensitive) -->
+    var languageCode = "zh-cn".replace(/-/g, '_').replace(/_(.*)/, function ($0, $1) {return $0.replace($1, $1.toUpperCase());});
+    timeago().render(document.querySelectorAll('.timeago'), languageCode);
+    timeago.cancel();  
+  </script>
+<script type="text/javascript" src="/dist/even.26188efa.min.js"></script>
+  <script type="text/javascript">
+    window.MathJax = {
+      tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+      TeX: {equationNumbers: {autoNumber: "AMS"}},
+      showProcessingMessages: false,
+      messageStyle: 'none'
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"  integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
