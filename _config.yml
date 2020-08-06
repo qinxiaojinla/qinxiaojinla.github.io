@@ -1,1 +1,4 @@
 theme: jekyll-theme-slate
+#sitemap
+sitemap:
+  path: sitemap.xml
