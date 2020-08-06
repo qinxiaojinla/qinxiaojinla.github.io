@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Chaldea</title>
+  <title>UE4源码笔记：Rendering - Chaldea</title>
   <meta name="renderer" content="webkit" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 
@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
 
-<meta name="author" content="ShengKai" /><meta name="description" content="迦勒底" /><meta name="keywords" content="Hugo, theme, even" />
+<meta name="author" content="ShengKai" /><meta name="description" content="对于UE的渲染模块，官方文档中是这样说的： There is a lot of rendering code in Unreal Engine 4 (UE4) so it is hard to get a quick high level view of what is going on. A good place to start reading through the code is FDeferredShadingSceneRenderer::Render 那就从FDeferr" /><meta name="keywords" content="Hugo, theme, even" />
 
 
 
@@ -26,9 +26,7 @@
 <meta name="generator" content="Hugo 0.74.3 with theme even" />
 
 
-<link rel="canonical" href="http://qinxiaojinla.github.io/" />
-  <link href="http://qinxiaojinla.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Chaldea" />
-  <link href="http://qinxiaojinla.github.io/index.xml" rel="feed" type="application/rss+xml" title="Chaldea" />
+<link rel="canonical" href="http://qinxiaojinla.github.io/post/rendering01/" />
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -40,16 +38,24 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
 
 
-<meta property="og:title" content="Chaldea" />
-<meta property="og:description" content="迦勒底" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="http://qinxiaojinla.github.io/" />
-<meta property="og:updated_time" content="2020-08-04T20:04:34+08:00" />
-<meta itemprop="name" content="Chaldea">
-<meta itemprop="description" content="迦勒底">
+<meta property="og:title" content="UE4源码笔记：Rendering" />
+<meta property="og:description" content="对于UE的渲染模块，官方文档中是这样说的： There is a lot of rendering code in Unreal Engine 4 (UE4) so it is hard to get a quick high level view of what is going on. A good place to start reading through the code is FDeferredShadingSceneRenderer::Render 那就从FDeferr" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://qinxiaojinla.github.io/post/rendering01/" />
+<meta property="article:published_time" content="2020-08-04T20:04:34+08:00" />
+<meta property="article:modified_time" content="2020-08-04T20:04:34+08:00" />
+<meta itemprop="name" content="UE4源码笔记：Rendering">
+<meta itemprop="description" content="对于UE的渲染模块，官方文档中是这样说的： There is a lot of rendering code in Unreal Engine 4 (UE4) so it is hard to get a quick high level view of what is going on. A good place to start reading through the code is FDeferredShadingSceneRenderer::Render 那就从FDeferr">
+<meta itemprop="datePublished" content="2020-08-04T20:04:34+08:00" />
+<meta itemprop="dateModified" content="2020-08-04T20:04:34+08:00" />
+<meta itemprop="wordCount" content="104">
+
+
+
+<meta itemprop="keywords" content="渲染," />
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Chaldea"/>
-<meta name="twitter:description" content="迦勒底"/>
+<meta name="twitter:title" content="UE4源码笔记：Rendering"/>
+<meta name="twitter:description" content="对于UE的渲染模块，官方文档中是这样说的： There is a lot of rendering code in Unreal Engine 4 (UE4) so it is hard to get a quick high level view of what is going on. A good place to start reading through the code is FDeferredShadingSceneRenderer::Render 那就从FDeferr"/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -113,61 +119,87 @@
     <main id="main" class="main">
       <div class="content-wrapper">
         <div id="content" class="content">
-          <section id="posts" class="posts">
-    <article class="post">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/rendering01/">UE4源码笔记：Rendering</a></h1>
-    <div class="post-meta">
-      <span class="post-time"> 2020-08-04 </span>
-      <div class="post-category">
-          <a href="/categories/ue4/"> UE4 </a>
-          </div>
-        <span class="more-meta"> 约 104 字 </span>
-        <span class="more-meta"> 预计阅读 1 分钟 </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    <div class="post-summary">
-      对于UE的渲染模块，官方文档中是这样说的： There is a lot of rendering code in Unreal Engine 4 (UE4) so it is hard to get a quick high level view of what is going on. A good place to start reading through the code is FDeferredShadingSceneRenderer::Render 那就从FDeferr
-    </div>
-    <div class="read-more">
-      <a href="/post/rendering01/" class="read-more-link">阅读更多</a>
-    </div>
-  </div>
-</article>
-
-    <article class="post">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/garbage01/">UE4源码笔记：Garbage Collection</a></h1>
-    <div class="post-meta">
-      <span class="post-time"> 2020-08-03 </span>
-      <div class="post-category">
-          <a href="/categories/ue4/"> UE4 </a>
-          </div>
-        <span class="more-meta"> 约 1835 字 </span>
-        <span class="more-meta"> 预计阅读 4 分钟 </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    <div class="post-summary">
-      本系列文章是非常基础向的UE4框架和原理的总结，囿于作者有限的工程经验和知识储备，对一些原理的描述难免存在错误和浅显之处，欢迎各位指正。 UE
-    </div>
-    <div class="read-more">
-      <a href="/post/garbage01/" class="read-more-link">阅读更多</a>
-    </div>
-  </div>
-</article>
-
-    </section>
-  
-  <nav class="pagination">
+          <article class="post">
     
-    
-  </nav>
+    <header class="post-header">
+      <h1 class="post-title">UE4源码笔记：Rendering</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2020-08-04 </span>
+        <div class="post-category">
+            <a href="/categories/ue4/"> UE4 </a>
+            </div>
+          <span class="more-meta"> 约 104 字 </span>
+          <span class="more-meta"> 预计阅读 1 分钟 </span>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="/img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents"></nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>对于UE的渲染模块，官方文档中是这样说的：</p>
+<blockquote>
+<p>There is a lot of rendering code in Unreal Engine 4 (UE4) so it is hard to get a quick high level view of what is going on. A good place to start reading through the code is <code>FDeferredShadingSceneRenderer::Render</code></p>
+</blockquote>
+<p>那就从<code>FDeferredShadingSceneRenderer::Render</code>开始吧！</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">ShengKai</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2020-08-04
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/%E6%B8%B2%E6%9F%93/">渲染</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/garbage01/">
+            <span class="next-text nav-default">UE4源码笔记：Garbage Collection</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
         </div>
         
+
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: '你的appId',
+        appKey: '你的appKey',
+        notify:  false ,
+        verify:  false ,
+        avatar:'mm',
+        placeholder: '说点什么吧...',
+        visitor:  false 
+    });
+  </script>
+
+  
 
       </div>
     </main>

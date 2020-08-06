@@ -10,35 +10,49 @@
   
   <url>
     <loc>http://qinxiaojinla.github.io/categories/</loc>
-    <lastmod>2020-08-03T14:28:27+08:00</lastmod>
+    <lastmod>2020-08-04T20:04:34+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>http://qinxiaojinla.github.io/</loc>
-    <lastmod>2020-08-03T14:28:27+08:00</lastmod>
+    <lastmod>2020-08-04T20:04:34+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>http://qinxiaojinla.github.io/post/</loc>
-    <lastmod>2020-08-03T14:28:27+08:00</lastmod>
+    <lastmod>2020-08-04T20:04:34+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>http://qinxiaojinla.github.io/tags/</loc>
-    <lastmod>2020-08-03T14:28:27+08:00</lastmod>
+    <lastmod>2020-08-04T20:04:34+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>http://qinxiaojinla.github.io/categories/ue4/</loc>
-    <lastmod>2020-08-03T14:28:27+08:00</lastmod>
+    <lastmod>2020-08-04T20:04:34+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>http://qinxiaojinla.github.io/post/rendering01/</loc>
+    <lastmod>2020-08-04T20:04:34+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>http://qinxiaojinla.github.io/tags/%E6%B8%B2%E6%9F%93/</loc>
+    <lastmod>2020-08-04T20:04:34+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
